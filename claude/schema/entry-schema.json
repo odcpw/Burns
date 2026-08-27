@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "team-cbt-mood-log entry",
+  "description": "One journal entry for the Mood Log app. Output exactly one of these per fenced ```json block at the end of a voice session. The app's Data → Import accepts a single entry, an array, or an export bundle {entries:[...]} — and tolerates the fenced block itself being pasted.",
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": { "enum": ["dml", "habit", "reframe", "decision"] },
+    "id": { "type": "string", "description": "Omit — the app assigns one on import." },
+    "createdAt": { "type": "string", "format": "date-time", "description": "Optional; app fills in import time if absent." },
+    "notes": { "type": "string" },
+
+    "event": { "type": "string", "description": "dml: the one specific upsetting moment." },
+    "emotions": {
+      "type": "array",
+      "description": "dml: emotions with 0-100 ratings; null when not rated.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "description": "Standard cluster string or the user's own word." },
+          "before": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+          "after": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 }
+        }
+      }
+    },
+    "thoughts": {
+      "type": "array",
+      "description": "dml: negative thoughts, verbatim.",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "before": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "Belief % before." },
+          "after": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "Belief % after challenging." },
+          "distortions": {
+            "type": "array",
+            "items": { "enum": ["AON", "OG", "MF", "DP", "MR", "FT", "MAG", "ER", "SH", "LAB", "SB", "OB"] },
+            "description": "Canonical codes; in habit context DP is displayed as DN (Discounting the Negative)."
+          },
+          "positive": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string", "description": "The user's positive thought — their words, 100% true." },
+              "belief": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 }
+            }
+          }
+        }
+      }
+    },
+
+    "situation": { "type": "string", "description": "habit: the tempting situation." },
+    "urgeBefore": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+    "urgeAfter": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+    "temptations": {
+      "type": "array",
+      "description": "habit: tempting thoughts, verbatim.",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "belief": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "How tempting, 0-100." },
+          "distortions": {
+            "type": "array",
+            "items": { "enum": ["AON", "OG", "MF", "DP", "MR", "FT", "MAG", "ER", "SH", "LAB", "SB", "OB"] }
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string", "description": "The user's loving/effective response — never authored by Claude." },
+              "belief": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 }
+            }
+          }
+        }
+      }
+    },
+
+    "habit": { "type": "string", "description": "reframe: the habit being examined." },
+    "advantages": { "type": "array", "items": { "type": "string" }, "description": "reframe: advantages of the habit." },
+    "disadvantages": { "type": "array", "items": { "type": "string" }, "description": "reframe: disadvantages of changing." },
+    "coreValues": { "type": "array", "items": { "type": "string" }, "description": "reframe: positive things the habit expresses." },
+
+    "optionA": { "type": "string" },
+    "optionB": { "type": "string" },
+    "advA": { "type": "array", "items": { "type": "string" } },
+    "disA": { "type": "array", "items": { "type": "string" } },
+    "advB": { "type": "array", "items": { "type": "string" } },
+    "disB": { "type": "array", "items": { "type": "string" } },
+    "weights": {
+      "type": "object",
+      "description": "decision: four 100-point splits; only the left-hand number is stored, complements are implied (c2=100-c1 etc.). c1: adv-vs-dis of A alone. c3: adv-vs-dis of B alone. c5: advantages A-vs-B. c7: disadvantages A-vs-B (higher = A's feel worse). Totals: A=(c1+c5)-((100-c1)+c7), B=(c3+(100-c5))-((100-c3)+(100-c7)).",
+      "properties": {
+        "c1": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "c3": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "c5": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "c7": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 }
+      }
+    }
+  }
+}

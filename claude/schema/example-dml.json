@@ -1,0 +1,30 @@
+{
+  "type": "dml",
+  "createdAt": "2026-08-27T18:40:00Z",
+  "event": "Sunday 9pm — opened the laptop and realized the client report due Monday morning isn't started",
+  "emotions": [
+    { "name": "Anxious, worried, panicky, nervous, frightened", "before": 85, "after": 35 },
+    { "name": "Guilty, remorseful, bad, ashamed", "before": 70, "after": 25 },
+    { "name": "Inferior, worthless, inadequate, defective, incompetent", "before": 60, "after": 20 }
+  ],
+  "thoughts": [
+    {
+      "text": "I'll never get this done in time — I'm completely useless.",
+      "before": 90,
+      "after": 25,
+      "distortions": ["FT", "AON", "LAB", "ER"],
+      "positive": {
+        "text": "I've pulled off tighter deadlines before. Useless people don't get handed the client reports. I can do a focused two hours tonight and finish tomorrow at 6.",
+        "belief": 100
+      }
+    },
+    {
+      "text": "The client will see I'm a fraud.",
+      "before": 75,
+      "after": null,
+      "distortions": ["MR", "FT", "LAB"],
+      "positive": { "text": "", "belief": null }
+    }
+  ],
+  "notes": "Second thought not challenged yet — parked for next session."
+}

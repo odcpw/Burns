@@ -1,0 +1,28 @@
+{
+  "type": "habit",
+  "createdAt": "2026-08-27T19:05:00Z",
+  "situation": "Home from work at 7, exhausted, cold beer in the fridge, game starts at 8",
+  "urgeBefore": 80,
+  "urgeAfter": 30,
+  "temptations": [
+    {
+      "text": "I deserve a beer — I've had a hard day.",
+      "belief": 85,
+      "distortions": ["ER", "SH", "OB"],
+      "response": {
+        "text": "I do deserve good things — including sleeping well and liking myself tomorrow morning. The game is fun either way; when I drink I usually doze off and miss it anyway.",
+        "belief": 90
+      }
+    },
+    {
+      "text": "I'll just have a couple, that can't hurt.",
+      "belief": 70,
+      "distortions": ["DP", "FT"],
+      "response": {
+        "text": "'Just a couple' has literally never happened. Tonight the answer is simply no, and the urge will pass in a few minutes.",
+        "belief": 85
+      }
+    }
+  ],
+  "notes": "Did a short Devil's Advocate round — crushed both. Moved the beer to the garage (stimulus control)."
+}

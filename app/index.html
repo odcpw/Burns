@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Mood Log</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+/* ---------- theme tokens ---------- */
+:root{
+  --bg:#f4f6f5; --card:#ffffff; --card2:#eef2f1; --ink:#1c2b28; --ink2:#5b6d69;
+  --line:#dde4e2; --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#d9efec;
+  --danger:#b0483f; --danger-soft:#f6e2e0; --good:#2f6f4f; --good-soft:#e0efe6;
+  --warn-soft:#f7efd9; --warn-ink:#7a5c17;
+  --chip:#e7ecea; --chip-on:#0f766e; --chip-on-ink:#ffffff;
+  --shadow:0 1px 3px rgba(20,40,36,.08),0 4px 14px rgba(20,40,36,.06);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101615; --card:#1a2321; --card2:#141c1a; --ink:#e6edeb; --ink2:#93a5a1;
+    --line:#2a3634; --accent:#2dd4bf; --accent-ink:#06302b; --accent-soft:#123f3a;
+    --danger:#e08a82; --danger-soft:#3a2422; --good:#7fc9a2; --good-soft:#1c322a;
+    --warn-soft:#3a3320; --warn-ink:#e0c877;
+    --chip:#243130; --chip-on:#2dd4bf; --chip-on-ink:#06302b;
+    --shadow:0 1px 3px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101615; --card:#1a2321; --card2:#141c1a; --ink:#e6edeb; --ink2:#93a5a1;
+  --line:#2a3634; --accent:#2dd4bf; --accent-ink:#06302b; --accent-soft:#123f3a;
+  --danger:#e08a82; --danger-soft:#3a2422; --good:#7fc9a2; --good-soft:#1c322a;
+  --warn-soft:#3a3320; --warn-ink:#e0c877;
+  --chip:#243130; --chip-on:#2dd4bf; --chip-on-ink:#06302b;
+  --shadow:0 1px 3px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.25);
+}
+/* ---------- base ---------- */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+}
+h1,h2,h3{line-height:1.25; margin:0 0 .35em}
+h1{font-size:1.35rem} h2{font-size:1.12rem} h3{font-size:1rem}
+p{margin:.4em 0}
+button{font:inherit; cursor:pointer; border:none; border-radius:10px; background:var(--chip); color:var(--ink); padding:.55em .9em; touch-action:manipulation}
+button:active{transform:translateY(1px)}
+textarea,input[type=text],input[type=number]{
+  font:inherit; color:var(--ink); background:var(--card2); border:1px solid var(--line);
+  border-radius:10px; padding:.6em .7em; width:100%;
+}
+textarea{resize:vertical; min-height:2.6em}
+textarea:focus,input:focus{outline:2px solid var(--accent); outline-offset:0}
+.small{font-size:.85rem; color:var(--ink2)}
+.tiny{font-size:.78rem; color:var(--ink2)}
+.hidden{display:none !important}
+/* ---------- layout ---------- */
+header.appbar{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:.5rem;
+  padding:calc(.6rem + env(safe-area-inset-top)) .8rem .6rem; background:var(--bg);
+  border-bottom:1px solid var(--line);
+}
+header.appbar .title{flex:1; min-width:0}
+header.appbar .title h1{font-size:1.05rem; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+header.appbar .title .sub{font-size:.75rem; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.iconbtn{background:transparent; padding:.45em .6em; font-size:1.15rem; line-height:1; border-radius:10px}
+.iconbtn:hover{background:var(--chip)}
+main{max-width:720px; margin:0 auto; padding:1rem .8rem 2rem}
+nav.tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex;
+  background:var(--card); border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+nav.tabbar button{
+  flex:1; background:none; border-radius:0; padding:.55em 0 .5em; color:var(--ink2);
+  display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.72rem;
+}
+nav.tabbar button .ico{font-size:1.25rem; line-height:1}
+nav.tabbar button.on{color:var(--accent)}
+.card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:.9rem; margin-bottom:.9rem}
+.card.flat{box-shadow:none; border:1px solid var(--line)}
+.btn-accent{background:var(--accent); color:var(--accent-ink); font-weight:600}
+.btn-soft{background:var(--accent-soft); color:var(--ink); font-weight:600}
+.btn-danger{background:var(--danger-soft); color:var(--danger); font-weight:600}
+.btn-wide{width:100%; padding:.8em; margin-top:.4rem}
+.row{display:flex; gap:.6rem; align-items:center}
+.row>*{min-width:0}
+.spread{justify-content:space-between}
+/* ---------- home ---------- */
+.newgrid{display:grid; grid-template-columns:1fr 1fr; gap:.7rem}
+.newgrid button{
+  background:var(--card); box-shadow:var(--shadow); border-radius:var(--radius);
+  padding:.85rem .8rem; text-align:left; display:flex; flex-direction:column; gap:.2rem;
+}
+.newgrid .nname{font-weight:650}
+.newgrid .ndesc{font-size:.76rem; color:var(--ink2); line-height:1.35}
+.newgrid .nico{font-size:1.35rem}
+.entry-item{display:flex; gap:.7rem; align-items:center; padding:.7rem .2rem; border-bottom:1px solid var(--line); cursor:pointer}
+.entry-item:last-child{border-bottom:none}
+.entry-item .eico{font-size:1.3rem}
+.entry-item .emain{flex:1; min-width:0}
+.entry-item .etitle{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.entry-item .emeta{font-size:.76rem; color:var(--ink2)}
+.badge{display:inline-block; font-size:.68rem; font-weight:700; letter-spacing:.02em; padding:.1em .5em; border-radius:999px; background:var(--accent-soft); color:var(--accent); vertical-align:middle}
+/* ---------- editor ---------- */
+.section-title{display:flex; align-items:baseline; justify-content:space-between; margin:1.1rem 0 .45rem}
+.section-title h2{margin:0}
+.hint{background:var(--warn-soft); color:var(--warn-ink); border-radius:10px; padding:.55em .7em; font-size:.82rem; margin:.5rem 0}
+.note{background:var(--accent-soft); border-radius:10px; padding:.55em .7em; font-size:.82rem; margin:.5rem 0}
+.chips{display:flex; flex-wrap:wrap; gap:.45rem; margin:.4rem 0}
+.chip{background:var(--chip); border-radius:999px; padding:.4em .85em; font-size:.85rem}
+.chip.on{background:var(--chip-on); color:var(--chip-on-ink); font-weight:600}
+.chip.add{border:1.5px dashed var(--line); background:transparent; color:var(--ink2)}
+/* percent slider row */
+.pct{display:flex; align-items:center; gap:.6rem; margin:.3rem 0}
+.pct label{flex:0 0 4.6em; font-size:.8rem; color:var(--ink2)}
+.pct input[type=range]{flex:1; accent-color:var(--accent); min-width:0; height:28px}
+.pct output{flex:0 0 3em; text-align:right; font-variant-numeric:tabular-nums; font-weight:650; font-size:.92rem}
+.pct output.unset{color:var(--ink2); font-weight:400}
+.emrow{padding:.55rem 0; border-bottom:1px solid var(--line)}
+.emrow:last-child{border-bottom:none}
+.emrow .emname{font-weight:600; font-size:.92rem; display:flex; justify-content:space-between; gap:.5rem; align-items:center}
+.xbtn{background:transparent; color:var(--ink2); font-size:1rem; padding:.1em .45em}
+.tcard{border:1px solid var(--line); border-radius:var(--radius); padding:.75rem; margin:.7rem 0; background:var(--card)}
+.tcard .tnum{font-weight:700; color:var(--accent); font-size:.8rem; letter-spacing:.04em; display:flex; justify-content:space-between; align-items:center; margin-bottom:.3rem}
+.subhead{font-size:.78rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:.7rem 0 .25rem}
+.positive-block{border-left:3px solid var(--good); padding-left:.6rem; margin-top:.6rem}
+.listedit .le-row{display:flex; gap:.5rem; margin:.35rem 0; align-items:flex-start}
+.listedit textarea{min-height:2.2em}
+/* distortion sheet */
+.sheet-back{position:fixed; inset:0; background:rgba(10,20,18,.45); z-index:60; display:flex; align-items:flex-end; justify-content:center}
+.sheet{background:var(--card); width:100%; max-width:720px; max-height:82vh; border-radius:18px 18px 0 0; display:flex; flex-direction:column}
+.sheet .sh-head{display:flex; align-items:center; justify-content:space-between; padding:.8rem .9rem .4rem}
+.sheet .sh-body{overflow-y:auto; padding:0 .9rem .9rem; -webkit-overflow-scrolling:touch}
+.dis-item{border-bottom:1px solid var(--line); padding:.55rem 0}
+.dis-item:last-child{border-bottom:none}
+.dis-row{display:flex; align-items:center; gap:.6rem; cursor:pointer}
+.dis-check{flex:0 0 1.5em; height:1.5em; border:2px solid var(--line); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:.9rem}
+.dis-item.on .dis-check{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.dis-name{flex:1; font-weight:600; font-size:.92rem}
+.dis-ab{font-size:.72rem; color:var(--ink2); font-weight:700}
+.dis-def{font-size:.82rem; color:var(--ink2); margin:.25rem 0 0 2.1em}
+.dis-def em{color:var(--ink)}
+/* decision */
+.dgrid{display:grid; grid-template-columns:1fr 1fr; gap:.6rem}
+.weightbox{margin:.9rem 0; padding:.7rem; border:1px solid var(--line); border-radius:12px}
+.weightbox .wlabels{display:flex; justify-content:space-between; font-size:.78rem; color:var(--ink2); gap:.5rem}
+.weightbox .wvals{display:flex; justify-content:space-between; font-weight:700; font-variant-numeric:tabular-nums}
+.weightbox input[type=range]{width:100%; accent-color:var(--accent); height:30px}
+.result{display:flex; gap:.6rem; text-align:center; margin:.6rem 0}
+.result .res{flex:1; border-radius:12px; padding:.7rem .4rem; background:var(--card2)}
+.result .res .rv{font-size:1.5rem; font-weight:800; font-variant-numeric:tabular-nums}
+.result .res.pos .rv{color:var(--good)} .result .res.neg .rv{color:var(--danger)}
+/* reference */
+details.ref{border-bottom:1px solid var(--line); padding:.35rem 0}
+details.ref>summary{cursor:pointer; font-weight:650; padding:.5rem 0; list-style:none; display:flex; justify-content:space-between; align-items:center}
+details.ref>summary::after{content:"›"; transform:rotate(90deg); transition:transform .15s; color:var(--ink2)}
+details.ref[open]>summary::after{transform:rotate(-90deg)}
+details.ref .ref-body{padding:.1rem 0 .8rem; font-size:.92rem}
+.reftable{width:100%; border-collapse:collapse; font-size:.85rem}
+.reftable td,.reftable th{border:1px solid var(--line); padding:.4em .5em; text-align:left; vertical-align:top}
+.polarity{display:grid; gap:.5rem; margin:.4rem 0}
+.pol{border-radius:10px; padding:.5em .65em; font-size:.85rem}
+.pol.neg{background:var(--danger-soft)} .pol.pos{background:var(--good-soft)}
+.pol b{display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.15em}
+/* toast */
+#toast{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(76px + env(safe-area-inset-bottom)); background:var(--ink); color:var(--bg); padding:.6em 1.1em; border-radius:999px; font-size:.85rem; z-index:80; box-shadow:var(--shadow); opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; text-align:center}
+#toast.show{opacity:1}
+/* menus */
+.menu{position:absolute; right:.6rem; top:3.2rem; background:var(--card); border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--line); z-index:50; min-width:230px; overflow:hidden}
+.menu button{display:block; width:100%; text-align:left; background:none; border-radius:0; padding:.7em 1em}
+.menu button:hover{background:var(--card2)}
+.menu button.danger{color:var(--danger)}
+@media print{ nav.tabbar, header.appbar .iconbtn, #toast{display:none} body{padding-bottom:0} }
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <button class="iconbtn hidden" id="backBtn" aria-label="Back">←</button>
+  <div class="title">
+    <h1 id="barTitle">Mood Log</h1>
+    <div class="sub" id="barSub">TEAM-CBT tools · after Dr&nbsp;David&nbsp;Burns</div>
+  </div>
+  <button class="iconbtn hidden" id="menuBtn" aria-label="Entry menu">⋯</button>
+</header>
+
+<main id="main"></main>
+
+<nav class="tabbar">
+  <button data-tab="home" class="on"><span class="ico">📓</span>Logs</button>
+  <button data-tab="reference"><span class="ico">📖</span>Guide</button>
+  <button data-tab="data"><span class="ico">⇅</span>Data</button>
+</nav>
+
+<div id="toast" role="status"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Mood Log — personal TEAM-CBT journaling tools
+   Implements the structure of Dr David Burns' published self-help forms
+   (Daily Mood Log, Habits & Addictions Log, Positive Reframing Table,
+   Decision-Making Tool) for personal use. Not affiliated with Dr Burns.
+   ===================================================================== */
+
+/* ---------- static data ---------- */
+
+const EMOTION_CLUSTERS = [
+  "Sad, blue, depressed, down, unhappy",
+  "Anxious, worried, panicky, nervous, frightened",
+  "Guilty, remorseful, bad, ashamed",
+  "Inferior, worthless, inadequate, defective, incompetent",
+  "Lonely, unloved, unwanted, rejected, alone, abandoned",
+  "Embarrassed, foolish, humiliated, self-conscious",
+  "Hopeless, discouraged, pessimistic, despairing",
+  "Frustrated, stuck, thwarted, defeated",
+  "Angry, mad, resentful, annoyed, irritated, upset, furious"
+];
+
+/* The 10 classic distortions. Each has a negative (depression/anxiety) face
+   and a positive (temptation/habit) face — the mirror image Burns describes. */
+const DISTORTIONS = [
+  {ab:"AON", name:"All-or-Nothing Thinking",
+   neg:"You look at things in absolute, black-and-white categories. Anything short of perfect feels like total failure.",
+   negEx:"“I stumbled on one answer, so the whole interview was a catastrophe.”",
+   pos:"Everything you have to do fuses into one overwhelming, impossible blob — or the habit feels like the only relief there is.",
+   posEx:"“There's way too much to catch up on. No point even starting tonight.”"},
+  {ab:"OG", name:"Overgeneralization",
+   neg:"You see a single negative event as a never-ending pattern of defeat — “always”, “never”, “every time”.",
+   negEx:"“She said no. I'll always be alone.”",
+   pos:"One slip becomes proof that the whole effort is ruined, so you might as well give up completely.",
+   posEx:"“I've blown my diet at lunch anyway — the week is ruined, might as well keep going.”"},
+  {ab:"MF", name:"Mental Filter",
+   neg:"You dwell on one negative detail and filter out all the positives, like a drop of ink discoloring the glass.",
+   negEx:"“Twenty kind comments, but that one criticism is all I can think about.”",
+   pos:"You dwell on how good it will feel and filter out the price you pay afterwards.",
+   posEx:"“I keep picturing how good that drink will taste — not tomorrow morning.”"},
+  {ab:"DP", abPos:"DN", name:"Discounting the Positive", namePos:"Discounting the Negative",
+   neg:"You insist that your positive qualities and achievements don't count.",
+   negEx:"“Sure it went well, but anyone could have done that.”",
+   pos:"You wave away the negative consequences — somehow they won't count this time.",
+   posEx:"“I'll just have one.” (You have never once stopped at one.)"},
+  {ab:"MR", name:"Mind Reading",
+   neg:"You assume you know people are reacting negatively to you, without any real evidence.",
+   negEx:"“They all think I'm boring.”",
+   pos:"You assume others don't struggle the way you do, or that nobody will notice or mind.",
+   posEx:"“Everyone else can eat whatever they want. And no one will see me anyway.”"},
+  {ab:"FT", name:"Fortune Telling",
+   neg:"You predict that things will turn out badly and treat the prediction as established fact.",
+   negEx:"“I'll freeze up and make a fool of myself.”",
+   pos:"You predict the reward with certainty — it will feel great and cause no problems.",
+   posEx:"“A couple of beers will fix this mood. I'll start fresh tomorrow.”"},
+  {ab:"MAG", name:"Magnification / Minimization",
+   neg:"You blow negatives out of proportion and shrink positives — the binocular trick.",
+   negEx:"“This mistake is huge. My successes were trivial.”",
+   pos:"You inflate how wonderful it will be and shrink the costs to nothing.",
+   posEx:"“This ice cream will taste SO good!”"},
+  {ab:"ER", name:"Emotional Reasoning",
+   neg:"You reason from how you feel: “I feel like an idiot, so I must be one.”",
+   negEx:"“I feel hopeless, so it must be hopeless.”",
+   pos:"You reason from cravings and moods: “I feel like it, so I should.”",
+   posEx:"“I'll start when I'm in the mood. I just don't feel like it right now.”"},
+  {ab:"SH", name:"Should Statements",
+   neg:"You direct shoulds, shouldn'ts, musts, oughts and have-tos at yourself or others, breeding guilt and pressure.",
+   negEx:"“I shouldn't feel this way. I must not fail.”",
+   pos:"You tell yourself you've earned it — and after giving in, the shoulds flip into guilt that fuels the next round.",
+   posEx:"“I've had a hard day, I deserve this.” … later: “I really shouldn't have.”"},
+  {ab:"LAB", name:"Labeling",
+   neg:"Instead of “I made a mistake”, you attach a label to yourself or others: “I'm a loser”, “He's a jerk”.",
+   negEx:"“I'm a failure.”",
+   pos:"Labels either excuse the habit or punish the slip so harshly you indulge again.",
+   posEx:"“I'm just a procrastinator.” Or after a slip: “I'm such a pig” — so upsetting you have three more.”"},
+  {ab:"SB", name:"Self-Blame",
+   neg:"You blame and berate yourself for things you weren't entirely responsible for.",
+   negEx:"“The whole thing was my fault.”",
+   pos:"You beat yourself up for giving in — feeding the guilt-then-indulge cycle.",
+   posEx:"“I'm so weak. What's wrong with me?”"},
+  {ab:"OB", name:"Other-Blame",
+   neg:"You find fault with others and overlook your own contribution to the problem.",
+   negEx:"“This is entirely their doing.”",
+   pos:"Unfairness and blame become a licence to give in.",
+   posEx:"“It's not fair that I can't drink when everyone else does. My genes / my spouse / my job made me do it.”"}
+];
+
+const TYPE_META = {
+  dml:      {ico:"🌤", label:"Daily Mood Log", badge:"DML"},
+  habit:    {ico:"🌀", label:"Habits & Addictions Log", badge:"HABIT"},
+  reframe:  {ico:"🔄", label:"Positive Reframing", badge:"REFRAME"},
+  decision: {ico:"⚖️", label:"Decision-Making Tool", badge:"DECIDE"}
+};
+
+/* ---------- storage ---------- */
+
+const STORE_KEY = "tcml.entries.v1";
+const SETTINGS_KEY = "tcml.settings.v1";
+function loadEntries(){
+  try{ const raw = localStorage.getItem(STORE_KEY); if(raw){ const v = JSON.parse(raw); if(Array.isArray(v)) return v; } }catch(e){}
+  return [];
+}
+let entries = loadEntries();
+let saveTimer = null;
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ try{ localStorage.setItem(STORE_KEY, JSON.stringify(entries)); }catch(e){ toast("Could not save — storage unavailable"); } }, 250);
+}
+function settings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||"{}"); }catch(e){ return {}; } }
+function setSetting(k,v){ const s=settings(); s[k]=v; try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }catch(e){} }
+
+function uid(){ return 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function nowISO(){ return new Date().toISOString(); }
+
+/* ---------- helpers ---------- */
+
+const $ = sel => document.querySelector(sel);
+const main = $("#main");
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString(undefined,{weekday:"short", day:"numeric", month:"short"}) + " " + d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"}); }
+function pctText(v){ return (v===null||v===undefined||v==="") ? "–" : v+"%"; }
+function clamp100(v){ v=Math.round(Number(v)); if(isNaN(v)) return null; return Math.max(0,Math.min(100,v)); }
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    let ok=false; try{ ok=document.execCommand("copy"); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+function download(name, text, mime){
+  try{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([text],{type:mime||"application/json"}));
+    a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},400);
+  }catch(e){ toast("Download blocked here — use Copy instead"); }
+}
+function disByAb(ab){ return DISTORTIONS.find(d=>d.ab===ab); }
+function disLabel(ab, positive){
+  const d = disByAb(ab); if(!d) return ab;
+  return positive ? (d.abPos||d.ab) : d.ab;
+}
+function disName(ab, positive){
+  const d = disByAb(ab); if(!d) return ab;
+  return positive ? (d.namePos||d.name) : d.name;
+}
+
+/* ---------- entry factories ---------- */
+
+function newEntry(type){
+  const base = { id:uid(), type, createdAt:nowISO(), updatedAt:nowISO(), notes:"" };
+  if(type==="dml") Object.assign(base,{ event:"", emotions:[], thoughts:[ newThought() ] });
+  if(type==="habit") Object.assign(base,{ situation:"", urgeBefore:null, urgeAfter:null, temptations:[ newTemptation() ] });
+  if(type==="reframe") Object.assign(base,{ habit:"", advantages:[""], disadvantages:[""], coreValues:[""] });
+  if(type==="decision") Object.assign(base,{ optionA:"", optionB:"", advA:[""], disA:[""], advB:[""], disB:[""],
+    weights:{c1:null,c3:null,c5:null,c7:null} });
+  return base;
+}
+function newThought(){ return { text:"", before:null, after:null, distortions:[], positive:{text:"", belief:null} }; }
+function newTemptation(){ return { text:"", belief:null, distortions:[], response:{text:"", belief:null} }; }
+
+function entryTitle(e){
+  if(e.type==="dml") return e.event.trim() || "(no upsetting event yet)";
+  if(e.type==="habit") return e.situation.trim() || "(no tempting situation yet)";
+  if(e.type==="reframe") return e.habit.trim() || "(no habit described yet)";
+  if(e.type==="decision"){
+    const a=e.optionA.trim(), b=e.optionB.trim();
+    return (a||b) ? `${a||"Option A"} vs ${b||"Option B"}` : "(options not set yet)";
+  }
+  return "(entry)";
+}
+
+/* ---------- app state / routing ---------- */
+
+let view = "home";          // home | entry | reference | data
+let currentId = null;       // entry being edited
+let sheetState = null;      // distortion picker state
+
+function currentEntry(){ return entries.find(e=>e.id===currentId) || null; }
+
+function show(tab){
+  view = tab; currentId = (tab==="entry") ? currentId : null;
+  render();
+  window.scrollTo(0,0);
+}
+function openEntry(id){ currentId=id; view="entry"; render(); window.scrollTo(0,0); }
+
+document.querySelectorAll("nav.tabbar button").forEach(b=>{
+  b.addEventListener("click", ()=> show(b.dataset.tab));
+});
+$("#backBtn").addEventListener("click", ()=> show("home"));
+$("#menuBtn").addEventListener("click", toggleEntryMenu);
+
+/* ---------- rendering ---------- */
+
+function render(){
+  document.querySelectorAll("nav.tabbar button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.tab===view || (view==="entry" && b.dataset.tab==="home"));
+  });
+  closeMenu();
+  const e = currentEntry();
+  $("#backBtn").classList.toggle("hidden", view!=="entry");
+  $("#menuBtn").classList.toggle("hidden", view!=="entry");
+  if(view==="entry" && e){
+    $("#barTitle").textContent = TYPE_META[e.type].label;
+    $("#barSub").textContent = fmtDate(e.createdAt);
+  } else {
+    $("#barTitle").textContent = "Mood Log";
+    $("#barSub").textContent = "TEAM-CBT tools · after Dr David Burns";
+  }
+  if(view==="home") renderHome();
+  else if(view==="entry") renderEntry();
+  else if(view==="reference") renderReference();
+  else if(view==="data") renderData();
+}
+
+/* ----- home ----- */
+
+function renderHome(){
+  const items = entries.slice().sort((a,b)=> b.updatedAt.localeCompare(a.updatedAt));
+  let listHtml;
+  if(!items.length){
+    listHtml = `<p class="small" style="text-align:center; padding:1rem 0">No entries yet.<br>Start with a Daily Mood Log when something upsets you,<br>or a Habits log when temptation strikes.</p>`;
+  } else {
+    listHtml = items.map(e=>`
+      <div class="entry-item" data-open="${e.id}">
+        <div class="eico">${TYPE_META[e.type].ico}</div>
+        <div class="emain">
+          <div class="etitle">${esc(entryTitle(e))}</div>
+          <div class="emeta"><span class="badge">${TYPE_META[e.type].badge}</span> ${fmtDate(e.updatedAt)}</div>
+        </div>
+        <div class="small">›</div>
+      </div>`).join("");
+  }
+  main.innerHTML = `
+    <div class="newgrid">
+      <button data-new="dml"><span class="nico">🌤</span><span class="nname">Daily Mood Log</span>
+        <span class="ndesc">Upset, anxious, down? Work through the event, feelings and thoughts.</span></button>
+      <button data-new="habit"><span class="nico">🌀</span><span class="nname">Habits &amp; Addictions</span>
+        <span class="ndesc">Tempted? Catch the tempting thoughts and their positive distortions.</span></button>
+      <button data-new="reframe"><span class="nico">🔄</span><span class="nname">Positive Reframing</span>
+        <span class="ndesc">The “Triple Paradox”: what's actually good about this habit?</span></button>
+      <button data-new="decision"><span class="nico">⚖️</span><span class="nname">Decision Tool</span>
+        <span class="ndesc">Stuck between two options? Weigh them systematically.</span></button>
+    </div>
+    <div class="section-title"><h2>Entries</h2><span class="small">${items.length||""}</span></div>
+    <div class="card">${listHtml}</div>`;
+  main.querySelectorAll("[data-new]").forEach(b=> b.addEventListener("click", ()=>{
+    const e=newEntry(b.dataset.new); entries.push(e); persist(); openEntry(e.id);
+  }));
+  main.querySelectorAll("[data-open]").forEach(el=> el.addEventListener("click", ()=> openEntry(el.dataset.open)));
+}
+
+/* ----- generic editor widgets ----- */
+
+function touch(e){ e.updatedAt = nowISO(); persist(); }
+
+function pctRow(label, value, oninput, opts){
+  const wrap=document.createElement("div"); wrap.className="pct";
+  const lab=document.createElement("label"); lab.textContent=label;
+  const r=document.createElement("input"); r.type="range"; r.min=0; r.max=100; r.step=(opts&&opts.step)||5;
+  r.value = (value===null||value===undefined) ? ((opts&&opts.defaultPos)??50) : value;
+  const out=document.createElement("output");
+  const paint=v=>{ out.textContent=pctText(v); out.classList.toggle("unset", v===null||v===undefined); };
+  paint(value);
+  r.addEventListener("input", ()=>{ const v=clamp100(r.value); paint(v); oninput(v); });
+  out.addEventListener("click", ()=>{
+    const t=prompt(label+" (0–100)", value==null?"":value);
+    if(t===null) return; const v=clamp100(t); r.value=v==null?50:v; paint(v); oninput(v);
+  });
+  wrap.append(lab,r,out);
+  return wrap;
+}
+
+function bindText(el, get, set, entry){
+  el.value = get() || "";
+  el.addEventListener("input", ()=>{ set(el.value); touch(entry); });
+}
+
+function listEditor(container, entry, arr, placeholder){
+  container.innerHTML=""; container.classList.add("listedit");
+  arr.forEach((val,i)=>{
+    const row=document.createElement("div"); row.className="le-row";
+    const ta=document.createElement("textarea"); ta.rows=1; ta.placeholder=placeholder; ta.value=val;
+    ta.addEventListener("input", ()=>{ arr[i]=ta.value; touch(entry); });
+    const x=document.createElement("button"); x.className="xbtn"; x.textContent="✕"; x.title="Remove";
+    x.addEventListener("click", ()=>{ arr.splice(i,1); if(!arr.length) arr.push(""); touch(entry); renderEntry(); });
+    row.append(ta,x); container.appendChild(row);
+  });
+  const add=document.createElement("button"); add.className="chip add"; add.textContent="+ add";
+  add.addEventListener("click", ()=>{ arr.push(""); touch(entry); renderEntry();
+    const tas=container.querySelectorAll("textarea"); if(tas.length) tas[tas.length-1].focus(); });
+  container.appendChild(add);
+}
+
+/* ----- entry dispatcher ----- */
+
+function renderEntry(){
+  const e=currentEntry();
+  if(!e){ show("home"); return; }
+  if(e.type==="dml") renderDML(e);
+  else if(e.type==="habit") renderHabit(e);
+  else if(e.type==="reframe") renderReframe(e);
+  else if(e.type==="decision") renderDecision(e);
+}
+
+/* ----- Daily Mood Log ----- */
+
+function renderDML(e){
+  main.innerHTML = `
+    <div class="card">
+      <h2>Upsetting event</h2>
+      <p class="small">One specific moment — who, what, when, where.</p>
+      <textarea id="ev" rows="2" placeholder="e.g. Sunday 9pm, realized I hadn't started the report due Monday"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Emotions</h2>
+      <p class="small">Add each feeling and rate it 0–100 <b>now</b>. Come back at the end to rate <b>after</b>.</p>
+      <div id="emrows"></div>
+      <div class="chips" id="emchips"></div>
+    </div>
+
+    <div id="thoughts"></div>
+    <button class="btn-soft btn-wide" id="addThought">+ Add negative thought</button>
+
+    <div class="card" style="margin-top:.9rem">
+      <h2>Notes</h2>
+      <textarea id="notes" rows="2" placeholder="Anything else worth keeping…"></textarea>
+    </div>
+    <div class="note">When you've talked back to your thoughts, re-rate your <b>belief “after”</b> on each thought and your <b>emotions “after”</b> above. That before→after drop is the whole point.</div>`;
+
+  bindText($("#ev"), ()=>e.event, v=>e.event=v, e);
+  bindText($("#notes"), ()=>e.notes, v=>e.notes=v, e);
+
+  // emotions
+  const emrows=$("#emrows");
+  e.emotions.forEach((em,i)=>{
+    const row=document.createElement("div"); row.className="emrow";
+    const head=document.createElement("div"); head.className="emname";
+    const nm=document.createElement("span"); nm.textContent=em.name;
+    const x=document.createElement("button"); x.className="xbtn"; x.textContent="✕";
+    x.addEventListener("click", ()=>{ e.emotions.splice(i,1); touch(e); renderEntry(); });
+    head.append(nm,x); row.appendChild(head);
+    row.appendChild(pctRow("Before", em.before, v=>{ em.before=v; touch(e); }));
+    row.appendChild(pctRow("After", em.after, v=>{ em.after=v; touch(e); }));
+    emrows.appendChild(row);
+  });
+  const chips=$("#emchips");
+  EMOTION_CLUSTERS.filter(c=>!e.emotions.some(em=>em.name===c)).forEach(c=>{
+    const b=document.createElement("button"); b.className="chip"; b.textContent=c.split(",")[0];
+    b.title=c;
+    b.addEventListener("click", ()=>{ e.emotions.push({name:c, before:null, after:null}); touch(e); renderEntry(); });
+    chips.appendChild(b);
+  });
+  const other=document.createElement("button"); other.className="chip add"; other.textContent="+ other…";
+  other.addEventListener("click", ()=>{
+    const t=prompt("Emotion word(s):"); if(!t||!t.trim()) return;
+    e.emotions.push({name:t.trim(), before:null, after:null}); touch(e); renderEntry();
+  });
+  chips.appendChild(other);
+
+  // thoughts
+  const twrap=$("#thoughts");
+  e.thoughts.forEach((t,i)=> twrap.appendChild(thoughtCard(e,t,i)));
+  $("#addThought").addEventListener("click", ()=>{ e.thoughts.push(newThought()); touch(e); renderEntry(); });
+}
+
+function thoughtCard(e,t,i){
+  const card=document.createElement("div"); card.className="tcard";
+  card.innerHTML=`
+    <div class="tnum"><span>NEGATIVE THOUGHT ${i+1}</span><button class="xbtn" data-del>✕</button></div>
+    <textarea data-text rows="2" placeholder="Write the thought word for word, e.g. “I'll never get this done — I'm useless.”"></textarea>
+    <div data-before></div><div data-after></div>
+    <div class="subhead">Distortions</div>
+    <div class="chips" data-dis></div>
+    <div class="positive-block">
+      <div class="subhead" style="margin-top:0">Positive thought</div>
+      <textarea data-pos rows="2" placeholder="Talk back — it must be 100% true, and it must reduce your belief in the negative thought."></textarea>
+      <div data-belief></div>
+    </div>`;
+  card.querySelector("[data-del]").addEventListener("click", ()=>{
+    if(e.thoughts.length===1){ toast("Keep at least one thought"); return; }
+    if(confirm("Delete this thought?")){ e.thoughts.splice(i,1); touch(e); renderEntry(); }
+  });
+  bindText(card.querySelector("[data-text]"), ()=>t.text, v=>t.text=v, e);
+  card.querySelector("[data-before]").appendChild(pctRow("Belief before", t.before, v=>{t.before=v; touch(e);}));
+  card.querySelector("[data-after]").appendChild(pctRow("Belief after", t.after, v=>{t.after=v; touch(e);}));
+  renderDisChips(card.querySelector("[data-dis]"), e, t, false);
+  bindText(card.querySelector("[data-pos]"), ()=>t.positive.text, v=>t.positive.text=v, e);
+  card.querySelector("[data-belief]").appendChild(pctRow("Belief", t.positive.belief, v=>{t.positive.belief=v; touch(e);}));
+  return card;
+}
+
+function renderDisChips(container, entry, thought, positive){
+  container.innerHTML="";
+  thought.distortions.forEach(ab=>{
+    const b=document.createElement("button"); b.className="chip on";
+    b.textContent=disLabel(ab,positive);
+    b.title=disName(ab,positive);
+    b.addEventListener("click", ()=> openDisSheet(entry, thought, positive));
+    container.appendChild(b);
+  });
+  const add=document.createElement("button"); add.className="chip add";
+  add.textContent=thought.distortions.length? "edit…" : "+ identify distortions";
+  add.addEventListener("click", ()=> openDisSheet(entry, thought, positive));
+  container.appendChild(add);
+}
+
+/* ----- distortion picker sheet ----- */
+
+function openDisSheet(entry, thought, positive){
+  const back=document.createElement("div"); back.className="sheet-back";
+  const sheet=document.createElement("div"); sheet.className="sheet";
+  sheet.innerHTML=`
+    <div class="sh-head">
+      <h2 style="margin:0">${positive? "Positive distortions" : "Cognitive distortions"}</h2>
+      <button class="btn-accent" data-done>Done</button>
+    </div>
+    <div class="sh-body">
+      <p class="tiny" style="margin-top:0">${positive
+        ? "Tempting thoughts are distorted too — the same 10 distortions, in the seductive direction. Tap all that fit."
+        : "Tap every distortion you can find in this thought — most thoughts contain several."}</p>
+      <div data-list></div>
+    </div>`;
+  const list=sheet.querySelector("[data-list]");
+  DISTORTIONS.forEach(d=>{
+    const item=document.createElement("div"); item.className="dis-item"+(thought.distortions.includes(d.ab)?" on":"");
+    const nm = positive ? (d.namePos||d.name) : d.name;
+    const ab = positive ? (d.abPos||d.ab) : d.ab;
+    const def = positive ? d.pos : d.neg;
+    const ex  = positive ? d.posEx : d.negEx;
+    item.innerHTML=`
+      <div class="dis-row">
+        <div class="dis-check">${thought.distortions.includes(d.ab)?"✓":""}</div>
+        <div class="dis-name">${esc(nm)} <span class="dis-ab">${esc(ab)}</span></div>
+      </div>
+      <div class="dis-def">${esc(def)}<br><em>${esc(ex)}</em></div>`;
+    item.querySelector(".dis-row").addEventListener("click", ()=>{
+      const idx=thought.distortions.indexOf(d.ab);
+      if(idx>=0) thought.distortions.splice(idx,1); else thought.distortions.push(d.ab);
+      item.classList.toggle("on", idx<0);
+      item.querySelector(".dis-check").textContent = idx<0 ? "✓" : "";
+      touch(entry);
+    });
+    list.appendChild(item);
+  });
+  const close=()=>{ back.remove(); renderEntry(); };
+  sheet.querySelector("[data-done]").addEventListener("click", close);
+  back.addEventListener("click", ev=>{ if(ev.target===back) close(); });
+  back.appendChild(sheet); document.body.appendChild(back);
+}
+
+/* ----- Habits & Addictions Log ----- */
+
+function renderHabit(e){
+  main.innerHTML=`
+    <div class="card">
+      <h2>Tempting situation</h2>
+      <p class="small">Where and when does the urge hit? Be concrete.</p>
+      <textarea id="sit" rows="2" placeholder="e.g. Home from work, tired, cold beer in the fridge, game about to start"></textarea>
+      <div class="subhead">Urge / craving intensity <span class="tiny" style="text-transform:none; font-weight:400">(optional)</span></div>
+      <div id="urgeB"></div><div id="urgeA"></div>
+    </div>
+
+    <div id="temps"></div>
+    <button class="btn-soft btn-wide" id="addTemp">+ Add tempting thought</button>
+
+    <div class="hint">💡 <b>Don't let anyone hand you your responses.</b> If you can't defeat a tempting thought yourself, that's information about motivation — try the <b>Positive Reframing</b> or <b>Decision Tool</b> first. When your responses are strong, try the <b>Devil's Advocate</b> role-play (see Guide).</div>
+
+    <div class="card">
+      <h2>Notes</h2>
+      <textarea id="notes" rows="2" placeholder="Outcome? What happened? Stimulus-control ideas…"></textarea>
+    </div>`;
+  bindText($("#sit"), ()=>e.situation, v=>e.situation=v, e);
+  bindText($("#notes"), ()=>e.notes, v=>e.notes=v, e);
+  $("#urgeB").appendChild(pctRow("Before", e.urgeBefore, v=>{e.urgeBefore=v; touch(e);}));
+  $("#urgeA").appendChild(pctRow("After", e.urgeAfter, v=>{e.urgeAfter=v; touch(e);}));
+  const wrap=$("#temps");
+  e.temptations.forEach((t,i)=> wrap.appendChild(temptationCard(e,t,i)));
+  $("#addTemp").addEventListener("click", ()=>{ e.temptations.push(newTemptation()); touch(e); renderEntry(); });
+}
+
+function temptationCard(e,t,i){
+  const card=document.createElement("div"); card.className="tcard";
+  card.innerHTML=`
+    <div class="tnum"><span>TEMPTING THOUGHT ${i+1}</span><button class="xbtn" data-del>✕</button></div>
+    <textarea data-text rows="2" placeholder="e.g. “I deserve a beer — I've had a hard day.”"></textarea>
+    <div data-belief></div>
+    <div class="subhead">Positive distortions</div>
+    <div class="chips" data-dis></div>
+    <div class="positive-block">
+      <div class="subhead" style="margin-top:0">Loving / effective response</div>
+      <textarea data-resp rows="2" placeholder="Talk back in your own voice — realistic and on your side, e.g. “I do deserve good things — including a clear head tomorrow.”"></textarea>
+      <div data-rbelief></div>
+    </div>`;
+  card.querySelector("[data-del]").addEventListener("click", ()=>{
+    if(e.temptations.length===1){ toast("Keep at least one thought"); return; }
+    if(confirm("Delete this thought?")){ e.temptations.splice(i,1); touch(e); renderEntry(); }
+  });
+  bindText(card.querySelector("[data-text]"), ()=>t.text, v=>t.text=v, e);
+  card.querySelector("[data-belief]").appendChild(pctRow("How tempting", t.belief, v=>{t.belief=v; touch(e);}));
+  renderDisChips(card.querySelector("[data-dis]"), e, t, true);
+  bindText(card.querySelector("[data-resp]"), ()=>t.response.text, v=>t.response.text=v, e);
+  card.querySelector("[data-rbelief]").appendChild(pctRow("Belief", t.response.belief, v=>{t.response.belief=v; touch(e);}));
+  return card;
+}
+
+/* ----- Positive Reframing (Triple Paradox) ----- */
+
+function renderReframe(e){
+  main.innerHTML=`
+    <div class="card">
+      <h2>Habit / addiction to examine</h2>
+      <textarea id="habit" rows="2" placeholder="e.g. Doomscrolling in bed until 1am"></textarea>
+    </div>
+    <div class="note">The paradox: listing what's genuinely <b>good</b> about the habit — honestly — is what dissolves the resistance to changing it. Don't hold back.</div>
+    <div class="card">
+      <h2>Advantages</h2>
+      <p class="small">What are the real benefits of this habit? There are many.</p>
+      <div id="adv"></div>
+    </div>
+    <div class="card">
+      <h2>Disadvantages of changing</h2>
+      <p class="small">What would be hard, boring or painful about giving it up?</p>
+      <div id="dis"></div>
+    </div>
+    <div class="card">
+      <h2>Core values</h2>
+      <p class="small">What does this habit show about you that's positive — even awesome?</p>
+      <div id="cv"></div>
+    </div>
+    <div class="hint">When you're done, ask yourself: given all of this… do I still want to change? If yes — write down <i>why</i>, in the notes. That's your fuel.</div>
+    <div class="card"><h2>Notes</h2><textarea id="notes" rows="2" placeholder="Why do I want to change anyway?"></textarea></div>`;
+  bindText($("#habit"), ()=>e.habit, v=>e.habit=v, e);
+  bindText($("#notes"), ()=>e.notes, v=>e.notes=v, e);
+  listEditor($("#adv"), e, e.advantages, "benefit of keeping the habit…");
+  listEditor($("#dis"), e, e.disadvantages, "cost of giving it up…");
+  listEditor($("#cv"), e, e.coreValues, "what it says about me that's positive…");
+}
+
+/* ----- Decision-Making Tool ----- */
+
+function weightBox(e, key, leftLabel, rightLabel, title){
+  const w=e.weights[key];
+  const box=document.createElement("div"); box.className="weightbox";
+  box.innerHTML=`
+    <div style="font-weight:650; font-size:.9rem; margin-bottom:.35rem">${title}</div>
+    <div class="wlabels"><span>${esc(leftLabel)}</span><span>${esc(rightLabel)}</span></div>
+    <input type="range" min="0" max="100" step="5" value="${w==null?50:w}">
+    <div class="wvals"><span data-l>${w==null?"–":w}</span><span data-r>${w==null?"–":100-w}</span></div>`;
+  const r=box.querySelector("input");
+  const paint=v=>{ box.querySelector("[data-l]").textContent=v==null?"–":v; box.querySelector("[data-r]").textContent=v==null?"–":100-v; };
+  r.addEventListener("input", ()=>{ const v=clamp100(r.value); e.weights[key]=v; paint(v); touch(e); updateDecisionResult(e); });
+  return box;
+}
+
+function decisionTotals(e){
+  const w=e.weights;
+  if([w.c1,w.c3,w.c5,w.c7].some(v=>v==null)) return null;
+  const c2=100-w.c1, c4=100-w.c3, c6=100-w.c5, c8=100-w.c7;
+  const advA=w.c1+w.c5, disA=c2+w.c7, advB=w.c3+c6, disB=c4+c8;
+  return { totalA: advA-disA, totalB: advB-disB, advA, disA, advB, disB };
+}
+function decisionVerdict(t, e){
+  const A=t.totalA, B=t.totalB;
+  const nameA=e.optionA.trim()||"Option A", nameB=e.optionB.trim()||"Option B";
+  const win = A===B? null : (A>B? nameA : nameB);
+  const sep=Math.abs(A-B);
+  let pat;
+  if(A>=15&&B>=15) pat=`<b>Can't lose</b> — both options score positive. Either way you land somewhere good; pick and go.`;
+  else if(A<=-15&&B<=-15) pat=`<b>Can't win</b> — both options score negative. That often means distorted thinking is coloring both, or an option is missing. A Daily Mood Log on the thoughts about each option can help.`;
+  else if(Math.abs(A)<15&&Math.abs(B)<15) pat=`<b>Fence sitter</b> — both hover near zero. Either the stakes balance out or nothing pulls strongly; consider adding more advantages/disadvantages, or new options.`;
+  else pat = sep>=100 ? `<b>No-brainer</b> — one option wins by a mile.` : `A clear direction, with ${sep} points of separation.`;
+  return (win? `<p style="margin:.2em 0"><b>${esc(win)}</b> comes out ahead by ${sep} points.</p>` : `<p style="margin:.2em 0">Dead even.</p>`)
+    + `<p class="small" style="margin:.2em 0">${pat}</p>`
+    + `<p class="tiny">This shows how you feel right now — not the “correct” answer. Redo it tomorrow; it may move, and that's part of the process.</p>`;
+}
+function updateDecisionResult(e){
+  const box=$("#dresult"); if(!box) return;
+  const t=decisionTotals(e);
+  if(!t){ box.innerHTML=`<p class="small">Set all four sliders to see the totals.</p>`; return; }
+  box.innerHTML=`
+    <div class="result">
+      <div class="res ${t.totalA>=0?"pos":"neg"}"><div class="small">${esc(e.optionA.trim()||"Option A")}</div><div class="rv">${t.totalA>0?"+":""}${t.totalA}</div><div class="tiny">adv ${t.advA} − dis ${t.disA}</div></div>
+      <div class="res ${t.totalB>=0?"pos":"neg"}"><div class="small">${esc(e.optionB.trim()||"Option B")}</div><div class="rv">${t.totalB>0?"+":""}${t.totalB}</div><div class="tiny">adv ${t.advB} − dis ${t.disB}</div></div>
+    </div>` + decisionVerdict(t,e);
+}
+
+function renderDecision(e){
+  main.innerHTML=`
+    <div class="card">
+      <h2>Two options</h2>
+      <p class="small">List all your options first (in your head or in notes), then pick the best two.</p>
+      <div class="subhead">Option A</div>
+      <textarea id="optA" rows="1" placeholder="often the status quo, e.g. “Keep drinking as much as I want”"></textarea>
+      <div class="subhead">Option B</div>
+      <textarea id="optB" rows="1" placeholder="e.g. “Stop entirely, on my own”"></textarea>
+    </div>
+    <div class="card">
+      <h2>Advantages &amp; disadvantages</h2>
+      <div class="subhead">Advantages of A</div><div id="advA"></div>
+      <div class="subhead">Disadvantages of A</div><div id="disA"></div>
+      <div class="subhead">Advantages of B</div><div id="advB"></div>
+      <div class="subhead">Disadvantages of B</div><div id="disB"></div>
+      <p class="tiny">Be brutally honest — if you don't list the real benefits, the tool can't work.</p>
+    </div>
+    <div class="card">
+      <h2>Weigh them</h2>
+      <p class="small">Four comparisons. In each, split 100 points by how the two sides <i>feel</i> — one strong item can outweigh five weak ones.</p>
+      <div id="wboxes"></div>
+    </div>
+    <div class="card"><h2>Result</h2><div id="dresult"></div></div>
+    <div class="card"><h2>Notes</h2><textarea id="notes" rows="2" placeholder="Other options to compare next…"></textarea></div>`;
+  bindText($("#optA"), ()=>e.optionA, v=>{e.optionA=v; updateDecisionResult(e);}, e);
+  bindText($("#optB"), ()=>e.optionB, v=>{e.optionB=v; updateDecisionResult(e);}, e);
+  bindText($("#notes"), ()=>e.notes, v=>e.notes=v, e);
+  listEditor($("#advA"), e, e.advA, "advantage of Option A…");
+  listEditor($("#disA"), e, e.disA, "disadvantage of Option A…");
+  listEditor($("#advB"), e, e.advB, "advantage of Option B…");
+  listEditor($("#disB"), e, e.disB, "disadvantage of Option B…");
+  const A=e.optionA.trim()||"Option A", B=e.optionB.trim()||"Option B";
+  const wb=$("#wboxes");
+  wb.appendChild(weightBox(e,"c1",`Advantages of ${A}`,`Disadvantages of ${A}`,`1 · Look only at ${A}`));
+  wb.appendChild(weightBox(e,"c3",`Advantages of ${B}`,`Disadvantages of ${B}`,`2 · Look only at ${B}`));
+  wb.appendChild(weightBox(e,"c5",`Advantages of ${A}`,`Advantages of ${B}`,`3 · Compare only the advantages`));
+  wb.appendChild(weightBox(e,"c7",`Disadvantages of ${A}`,`Disadvantages of ${B}`,`4 · Compare only the disadvantages (higher = worse)`));
+  updateDecisionResult(e);
+}
+
+/* ---------- entry menu (export etc.) ---------- */
+
+let menuEl=null;
+function closeMenu(){ if(menuEl){ menuEl.remove(); menuEl=null; } }
+function toggleEntryMenu(){
+  if(menuEl){ closeMenu(); return; }
+  const e=currentEntry(); if(!e) return;
+  menuEl=document.createElement("div"); menuEl.className="menu";
+  menuEl.innerHTML=`
+    <button data-a="claude">🤖 Copy for Claude</button>
+    <button data-a="md">📋 Copy as text</button>
+    <button data-a="json">🧾 Copy as JSON</button>
+    <button data-a="dl">⬇️ Download JSON</button>
+    <button data-a="del" class="danger">🗑 Delete entry</button>`;
+  menuEl.addEventListener("click", async ev=>{
+    const a=ev.target.dataset.a; if(!a) return;
+    closeMenu();
+    if(a==="md"){ (await copyText(entryToMarkdown(e))) ? toast("Copied as text") : toast("Copy failed"); }
+    if(a==="claude"){ (await copyText(claudePrompt(e))) ? toast("Copied — paste into a Claude chat") : toast("Copy failed"); }
+    if(a==="json"){ (await copyText(JSON.stringify(e,null,2))) ? toast("JSON copied") : toast("Copy failed"); }
+    if(a==="dl"){ download(`moodlog-${e.type}-${e.createdAt.slice(0,10)}.json`, JSON.stringify(e,null,2)); }
+    if(a==="del"){ if(confirm("Delete this entry permanently?")){ entries=entries.filter(x=>x.id!==e.id); persist(); show("home"); toast("Deleted"); } }
+  });
+  document.body.appendChild(menuEl);
+  setTimeout(()=>document.addEventListener("click", function h(ev){ if(menuEl&&!menuEl.contains(ev.target)&&ev.target.id!=="menuBtn"){ closeMenu(); document.removeEventListener("click",h);} }),0);
+}
+
+/* ---------- export formats ---------- */
+
+function mdPct(v){ return v==null?"—":v+"%"; }
+function entryToMarkdown(e){
+  const L=[];
+  const meta=TYPE_META[e.type];
+  L.push(`# ${meta.label} — ${fmtDate(e.createdAt)}`,"");
+  if(e.type==="dml"){
+    L.push(`**Upsetting event:** ${e.event||"—"}`,"");
+    if(e.emotions.length){
+      L.push(`| Emotion | Before | After |`,`|---|---|---|`);
+      e.emotions.forEach(em=>L.push(`| ${em.name} | ${mdPct(em.before)} | ${mdPct(em.after)} |`));
+      L.push("");
+    }
+    e.thoughts.forEach((t,i)=>{
+      L.push(`**${i+1}. Negative thought** (belief before ${mdPct(t.before)}, after ${mdPct(t.after)})`);
+      L.push(`> ${t.text||"—"}`);
+      if(t.distortions.length) L.push(`Distortions: ${t.distortions.map(a=>disName(a,false)+" ("+a+")").join(", ")}`);
+      if(t.positive.text) L.push(`**Positive thought** (belief ${mdPct(t.positive.belief)}): ${t.positive.text}`);
+      L.push("");
+    });
+  }
+  if(e.type==="habit"){
+    L.push(`**Tempting situation:** ${e.situation||"—"}`,"");
+    if(e.urgeBefore!=null||e.urgeAfter!=null) L.push(`Urge intensity: before ${mdPct(e.urgeBefore)}, after ${mdPct(e.urgeAfter)}`,"");
+    e.temptations.forEach((t,i)=>{
+      L.push(`**${i+1}. Tempting thought** (temptation ${mdPct(t.belief)})`);
+      L.push(`> ${t.text||"—"}`);
+      if(t.distortions.length) L.push(`Positive distortions: ${t.distortions.map(a=>disName(a,true)+" ("+disLabel(a,true)+")").join(", ")}`);
+      if(t.response.text) L.push(`**Response** (belief ${mdPct(t.response.belief)}): ${t.response.text}`);
+      L.push("");
+    });
+  }
+  if(e.type==="reframe"){
+    L.push(`**Habit / addiction:** ${e.habit||"—"}`,"");
+    L.push(`**Advantages of the habit:**`); e.advantages.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    L.push("",`**Disadvantages of changing:**`); e.disadvantages.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    L.push("",`**Core values it expresses:**`); e.coreValues.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    L.push("");
+  }
+  if(e.type==="decision"){
+    L.push(`**Option A:** ${e.optionA||"—"}`,`**Option B:** ${e.optionB||"—"}`,"");
+    L.push(`**Advantages of A:**`); e.advA.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    L.push(`**Disadvantages of A:**`); e.disA.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    L.push(`**Advantages of B:**`); e.advB.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    L.push(`**Disadvantages of B:**`); e.disB.filter(x=>x.trim()).forEach(x=>L.push(`- ${x}`));
+    const t=decisionTotals(e);
+    if(t) L.push("",`**Totals:** A = ${t.totalA>0?"+":""}${t.totalA}, B = ${t.totalB>0?"+":""}${t.totalB}`);
+    L.push("");
+  }
+  if(e.notes&&e.notes.trim()) L.push(`**Notes:** ${e.notes}`,"");
+  return L.join("\n");
+}
+
+function claudePrompt(e){
+  const intro = {
+    dml: "Here is a Daily Mood Log entry I'm working on (TEAM-CBT style, after Dr David Burns). Please: (1) empathize briefly, (2) help me spot any distortions I missed, (3) help me sharpen positive thoughts that are 100% true and reduce my belief in the negative thoughts. Ask me one question at a time and don't put words in my mouth — coach me to find my own answers.",
+    habit: "Here is a Habits & Addictions log entry (TEAM-CBT style, after Dr David Burns). Tempting thoughts contain POSITIVE distortions. Please: (1) help me spot the positive distortions, (2) coach me — without handing me answers — to build responses I actually believe, and (3) if I'm up for it, run a Devil's Advocate role-play: you voice my tempting thoughts seductively in the second person, I talk back, and we stop if I can't crush one (that means motivation work first, not more arguing).",
+    reframe: "Here is a Positive Reframing Table (Triple Paradox, after Dr David Burns) about a habit. Help me make each column truly honest and complete — especially the genuine advantages and core values. Don't push me to change; the paradox only works if the good side is fully honored.",
+    decision: "Here is a Decision-Making Tool worksheet (after Dr David Burns). Help me check whether my lists are complete and honest, and whether distorted thinking might be skewing any weighting. Don't make the decision for me."
+  }[e.type];
+  return intro + "\n\n" + entryToMarkdown(e);
+}
+
+/* ---------- reference ---------- */
+
+function renderReference(){
+  const disHtml = DISTORTIONS.map(d=>`
+    <details class="ref">
+      <summary>${esc(d.name)}${d.namePos? " / "+esc(d.namePos):""} <span class="dis-ab" style="margin-left:auto; margin-right:.6rem">${esc(d.ab)}${d.abPos? " / "+esc(d.abPos):""}</span></summary>
+      <div class="ref-body">
+        <div class="polarity">
+          <div class="pol neg"><b>Negative — fuels depression &amp; anxiety</b>${esc(d.neg)}<br><em>${esc(d.negEx)}</em></div>
+          <div class="pol pos"><b>Positive — fuels temptations &amp; habits</b>${esc(d.pos)}<br><em>${esc(d.posEx)}</em></div>
+        </div>
+      </div>
+    </details>`).join("");
+
+  main.innerHTML=`
+    <div class="card">
+      <h2>How to do a Daily Mood Log</h2>
+      <ol style="padding-left:1.2em; margin:.4em 0; font-size:.92rem">
+        <li><b>Event.</b> One specific upsetting moment — not “my life”, but “Sunday 9pm, saw the unanswered email”.</li>
+        <li><b>Emotions.</b> Circle the feeling words that fit and rate each 0–100 (<i>before</i>).</li>
+        <li><b>Negative thoughts.</b> Write each thought word for word and rate how much you believe it (0–100). Thoughts, not feelings — “I'm a failure”, not “I feel sad”.</li>
+        <li><b>Distortions.</b> Find the distortions in each thought — most contain several.</li>
+        <li><b>Positive thoughts.</b> Talk back. Two conditions:
+          <ul style="padding-left:1.1em">
+            <li><b>Necessary:</b> the positive thought must be 100% true. Rationalizations and half-truths never help.</li>
+            <li><b>Sufficient:</b> it must sharply reduce your belief in the negative thought.</li>
+          </ul>
+          Then re-rate belief in the negative thought (<i>after</i>) and re-rate your emotions (<i>after</i>).</li>
+      </ol>
+      <p class="tiny">The emotional change lives in the before→after drop. If belief in a negative thought won't budge, try another technique (see below) — or check whether part of you has good reasons to keep the thought (that's what Positive Reframing is for).</p>
+    </div>
+
+    <div class="card">
+      <h2>The 10 distortions — negative &amp; positive</h2>
+      <p class="small">Each classic distortion has a mirror image. The negative version makes you miserable; the positive version makes temptation irresistible (and fuels habits and addictions).</p>
+      ${disHtml}
+    </div>
+
+    <div class="card">
+      <h2>Habits &amp; Addictions Log — how to</h2>
+      <ol style="padding-left:1.2em; margin:.4em 0; font-size:.92rem">
+        <li>Describe the <b>tempting situation</b> concretely.</li>
+        <li>Write your <b>tempting thoughts</b> word for word (“I'll just have one”, “I deserve it”).</li>
+        <li>Identify the <b>positive distortions</b> in each.</li>
+        <li>Answer each with a <b>loving, realistic response</b> — in your own words. If someone else writes your responses for you, it backfires.</li>
+      </ol>
+      <h3>Devil's Advocate role-play</h3>
+      <p style="font-size:.92rem">Have a friend (or Claude, or a voice recording of yourself) read your tempting thoughts <i>to</i> you in the second person, as seductively as possible: “Go on — you deserve that beer, you've had such a hard day…”. Your job: crush each one out loud, in the first person, spontaneously. Two rules:</p>
+      <ul style="padding-left:1.2em; font-size:.92rem">
+        <li>If you can't defeat a thought, don't get bailed out — it means the decision to change isn't made yet. Go back to Positive Reframing or the Decision Tool.</li>
+        <li>The tempter must genuinely try to win. A tempter who is secretly “helping” ruins the exercise.</li>
+      </ul>
+      <h3>Two practical allies</h3>
+      <ul style="padding-left:1.2em; font-size:.92rem">
+        <li><b>Stimulus control:</b> no one resists every urge forever — remove the cue instead (no beer in the fridge, no ice cream in the freezer, phone in another room).</li>
+        <li><b>Replenish motivation:</b> cravings return. When they do, revisit your Positive Reframing table and your reasons to change — then redo the log with the new tempting thoughts.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Positive Reframing — the Triple Paradox</h2>
+      <p style="font-size:.92rem">Before fighting a habit, honor it. List honestly: the <b>advantages</b> of the habit, the <b>disadvantages of changing</b>, and the <b>core values</b> it expresses (what it shows about you that's positive). Nobody gives up a rewarding habit without a compelling reason — this table surfaces whether you actually have one. If, after all that, you still want to change: write down why. That reason is your engine.</p>
+    </div>
+
+    <div class="card">
+      <h2>Decision-Making Tool</h2>
+      <p style="font-size:.92rem">List your options and pick the best two. List advantages and disadvantages of each. Then four 100-point splits: A alone (adv vs dis), B alone (adv vs dis), advantages A vs B, disadvantages A vs B. The app adds them up: totals range −200 to +200. Patterns: <b>no-brainer</b> (one clearly wins), <b>can't lose</b> (both positive), <b>can't win</b> (both negative — often distorted thinking; do a Mood Log on it), <b>fence sitter</b> (both near zero). The tool shows what you want — it never decides for you.</p>
+    </div>
+
+    <div class="card">
+      <h2>Emotion words</h2>
+      <table class="reftable">${EMOTION_CLUSTERS.map(c=>{const[first,...rest]=c.split(", ");return `<tr><th>${esc(first)}</th><td>${esc(rest.join(", "))}</td></tr>`;}).join("")}</table>
+    </div>
+
+    <div class="card">
+      <h2>A few ways to untwist thinking</h2>
+      <table class="reftable">
+        <tr><th>Examine the evidence</th><td>What are the actual facts for and against the thought?</td></tr>
+        <tr><th>Double standard</th><td>Would you say this to a dear friend in the same situation? What would you say instead?</td></tr>
+        <tr><th>Experimental technique</th><td>Test the thought like a scientist — do the thing and observe.</td></tr>
+        <tr><th>Survey technique</th><td>Ask people — do they actually think what you assume they think?</td></tr>
+        <tr><th>Reattribution</th><td>List all causes of the problem — not just “me”.</td></tr>
+        <tr><th>Semantic method</th><td>Swap the whip for kind language: “it would be preferable” instead of “I should”.</td></tr>
+        <tr><th>Externalization of voices</th><td>Someone plays your negative thoughts at you; you defeat them out loud (the DML's sparring partner; for habits, its cousin is Devil's Advocate).</td></tr>
+        <tr><th>Acceptance paradox</th><td>Instead of fighting the criticism, find peace in accepting the kernel of truth in it — with self-respect.</td></tr>
+        <tr><th>Cost-benefit analysis</th><td>What does believing this thought / keeping this habit cost me, and what does it give me?</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>The TEAM model</h2>
+      <table class="reftable">
+        <tr><th>T — Testing</th><td>Measure feelings before and after. That's why every rating here has a before/after.</td></tr>
+        <tr><th>E — Empathy</th><td>Warmth first. With yourself too — the log is not a courtroom.</td></tr>
+        <tr><th>A — Assessment of resistance</th><td>Ambivalence is normal and meaningful. Positive Reframing honors the good reasons behind the “problem” before trying to change it.</td></tr>
+        <tr><th>M — Methods</th><td>Only then, techniques: distortions, positive thoughts, role-plays, experiments…</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>About</h2>
+      <p class="small">A personal journaling tool implementing the structure of the self-help forms in Dr&nbsp;David&nbsp;Burns' books (<i>Feeling Good</i>, <i>When Panic Attacks</i>, <i>Feeling Great</i>). The original forms are © David D. Burns, M.D. — see <b>feelinggood.com</b> for the originals, his podcast, and books. This app is an independent personal tool, not affiliated with or endorsed by Dr&nbsp;Burns, and it is not therapy or medical advice.</p>
+      <p class="small"><b>If you're in crisis</b> or having thoughts of harming yourself, please contact your local emergency number or a crisis line now — this app is not the right tool for that moment.</p>
+      <p class="tiny">Your entries live only in this browser (localStorage). Export regularly from the Data tab if you want a backup.</p>
+    </div>`;
+}
+
+/* ---------- data view ---------- */
+
+function exportBundle(){ return JSON.stringify({app:"team-cbt-mood-log", version:1, exportedAt:nowISO(), entries}, null, 2); }
+
+function extractJSON(text){
+  text=text.trim();
+  // allow ```json fenced blocks (e.g. pasted from a Claude chat)
+  const fence=text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(fence) text=fence[1].trim();
+  const first=text.search(/[{\[]/);
+  if(first>0) text=text.slice(first);
+  return JSON.parse(text);
+}
+
+function normalizeImported(obj){
+  // accepts: bundle {entries:[...]}, array of entries, or a single entry
+  let list = Array.isArray(obj) ? obj : (obj && Array.isArray(obj.entries)) ? obj.entries : [obj];
+  const out=[];
+  for(const raw of list){
+    if(!raw || typeof raw!=="object" || !TYPE_META[raw.type]) continue;
+    const e=Object.assign(newEntry(raw.type), raw);
+    e.id = raw.id || uid();
+    e.createdAt = raw.createdAt || nowISO();
+    e.updatedAt = raw.updatedAt || nowISO();
+    out.push(e);
+  }
+  return out;
+}
+
+function renderData(){
+  main.innerHTML=`
+    <div class="card">
+      <h2>Export</h2>
+      <p class="small">${entries.length} entries. Everything lives only in this browser — export for backup or to move devices.</p>
+      <div class="row">
+        <button class="btn-accent" id="exCopy">Copy JSON</button>
+        <button class="btn-soft" id="exDl">Download</button>
+        <button class="btn-soft" id="exShare">Share…</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Import</h2>
+      <p class="small">Paste JSON — a full export, a single entry, or a Claude voice-session result (a <code>\`\`\`json</code> block works as-is).</p>
+      <textarea id="imTa" rows="4" placeholder='{"app":"team-cbt-mood-log", …} or a single entry object'></textarea>
+      <button class="btn-accent btn-wide" id="imBtn">Import</button>
+    </div>
+    <div class="card">
+      <h2>Appearance</h2>
+      <div class="chips">
+        <button class="chip" data-th="">System theme</button>
+        <button class="chip" data-th="light">Light</button>
+        <button class="chip" data-th="dark">Dark</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Danger zone</h2>
+      <button class="btn-danger" id="wipe">Delete all entries</button>
+    </div>`;
+  $("#exCopy").addEventListener("click", async ()=> (await copyText(exportBundle())) ? toast("Export copied") : toast("Copy failed"));
+  $("#exDl").addEventListener("click", ()=> download(`moodlog-export-${new Date().toISOString().slice(0,10)}.json`, exportBundle()));
+  $("#exShare").addEventListener("click", async ()=>{
+    if(navigator.share){ try{ await navigator.share({title:"Mood Log export", text:exportBundle()}); }catch(e){} }
+    else toast("Sharing not available — use Copy");
+  });
+  $("#imBtn").addEventListener("click", ()=>{
+    const ta=$("#imTa");
+    let obj; try{ obj=extractJSON(ta.value); }catch(e){ toast("Couldn't parse that as JSON"); return; }
+    const list=normalizeImported(obj);
+    if(!list.length){ toast("No valid entries found"); return; }
+    let added=0, updated=0;
+    for(const ne of list){
+      const idx=entries.findIndex(x=>x.id===ne.id);
+      if(idx>=0){ entries[idx]=ne; updated++; } else { entries.push(ne); added++; }
+    }
+    persist(); ta.value="";
+    toast(`Imported ${added} new${updated? ", updated "+updated : ""}`);
+  });
+  main.querySelectorAll("[data-th]").forEach(b=>{
+    const cur=settings().theme||"";
+    b.classList.toggle("on", (b.dataset.th||"")===cur);
+    b.addEventListener("click", ()=>{ setSetting("theme", b.dataset.th); applyTheme(); renderData(); });
+  });
+  $("#wipe").addEventListener("click", ()=>{
+    if(confirm("Delete ALL entries permanently? Consider exporting first.")){
+      if(confirm("Really sure? This cannot be undone.")){ entries=[]; persist(); toast("All entries deleted"); }
+    }
+  });
+}
+
+function applyTheme(){
+  const t=settings().theme;
+  if(t==="light"||t==="dark") document.documentElement.dataset.theme=t;
+  else delete document.documentElement.dataset.theme;
+}
+
+/* ---------- boot ---------- */
+
+applyTheme();
+render();
+
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+</script>
+</body>
+</html>
