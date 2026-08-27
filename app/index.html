@@ -343,6 +343,36 @@ function download(name, text, mime){
     setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},400);
   }catch(e){ toast("Download blocked here — use Copy instead"); }
 }
+/* In-page dialogs — native confirm()/prompt() are blocked in some sandboxed
+   contexts (e.g. hosted artifact iframes), so we never rely on them. */
+function dialog(opts){
+  const back=document.createElement("div"); back.className="sheet-back"; back.style.alignItems="center"; back.style.padding="1rem";
+  const box=document.createElement("div"); box.className="card"; box.style.cssText="max-width:360px;width:100%;margin:0";
+  const msg=document.createElement("p"); msg.style.margin="0 0 .7rem"; msg.textContent=opts.message;
+  box.appendChild(msg);
+  let input=null;
+  if(opts.input){
+    input=document.createElement("input");
+    input.type=opts.number?"number":"text";
+    if(opts.number){ input.min=0; input.max=100; input.inputMode="numeric"; }
+    input.value=opts.value==null?"":opts.value;
+    input.placeholder=opts.placeholder||"";
+    input.style.marginBottom=".7rem";
+    box.appendChild(input);
+  }
+  const row=document.createElement("div"); row.className="row"; row.style.justifyContent="flex-end";
+  const cancel=document.createElement("button"); cancel.textContent="Cancel";
+  const ok=document.createElement("button"); ok.className=opts.danger?"btn-danger":"btn-accent"; ok.textContent=opts.confirmLabel||"OK";
+  row.append(cancel,ok); box.appendChild(row); back.appendChild(box); document.body.appendChild(back);
+  const close=()=>back.remove();
+  cancel.addEventListener("click", close);
+  back.addEventListener("click", ev=>{ if(ev.target===back) close(); });
+  const submit=()=>{ const v=input?input.value:true; close(); opts.onConfirm(v); };
+  ok.addEventListener("click", submit);
+  if(input){ input.addEventListener("keydown", ev=>{ if(ev.key==="Enter") submit(); }); setTimeout(()=>input.focus(),50); }
+}
+function uiConfirm(message, onYes, opts){ dialog(Object.assign({message, onConfirm:onYes, danger:true, confirmLabel:"Delete"}, opts||{})); }
+
 function disByAb(ab){ return DISTORTIONS.find(d=>d.ab===ab); }
 function disLabel(ab, positive){
   const d = disByAb(ab); if(!d) return ab;
@@ -473,8 +503,9 @@ function pctRow(label, value, oninput, opts){
   paint(value);
   r.addEventListener("input", ()=>{ const v=clamp100(r.value); paint(v); oninput(v); });
   out.addEventListener("click", ()=>{
-    const t=prompt(label+" (0–100)", value==null?"":value);
-    if(t===null) return; const v=clamp100(t); r.value=v==null?50:v; paint(v); oninput(v);
+    dialog({message:label+" (0–100)", input:true, number:true, value, confirmLabel:"Set", onConfirm:t=>{
+      const v=clamp100(t); if(v===null) return; r.value=v; paint(v); oninput(v);
+    }});
   });
   wrap.append(lab,r,out);
   return wrap;
@@ -563,8 +594,10 @@ function renderDML(e){
   });
   const other=document.createElement("button"); other.className="chip add"; other.textContent="+ other…";
   other.addEventListener("click", ()=>{
-    const t=prompt("Emotion word(s):"); if(!t||!t.trim()) return;
-    e.emotions.push({name:t.trim(), before:null, after:null}); touch(e); renderEntry();
+    dialog({message:"Emotion word(s):", input:true, placeholder:"e.g. jealous, ashamed…", confirmLabel:"Add", onConfirm:t=>{
+      if(!t||!t.trim()) return;
+      e.emotions.push({name:t.trim(), before:null, after:null}); touch(e); renderEntry();
+    }});
   });
   chips.appendChild(other);
 
@@ -589,7 +622,7 @@ function thoughtCard(e,t,i){
     </div>`;
   card.querySelector("[data-del]").addEventListener("click", ()=>{
     if(e.thoughts.length===1){ toast("Keep at least one thought"); return; }
-    if(confirm("Delete this thought?")){ e.thoughts.splice(i,1); touch(e); renderEntry(); }
+    uiConfirm("Delete this thought?", ()=>{ e.thoughts.splice(i,1); touch(e); renderEntry(); });
   });
   bindText(card.querySelector("[data-text]"), ()=>t.text, v=>t.text=v, e);
   card.querySelector("[data-before]").appendChild(pctRow("Belief before", t.before, v=>{t.before=v; touch(e);}));
@@ -704,7 +737,7 @@ function temptationCard(e,t,i){
     </div>`;
   card.querySelector("[data-del]").addEventListener("click", ()=>{
     if(e.temptations.length===1){ toast("Keep at least one thought"); return; }
-    if(confirm("Delete this thought?")){ e.temptations.splice(i,1); touch(e); renderEntry(); }
+    uiConfirm("Delete this thought?", ()=>{ e.temptations.splice(i,1); touch(e); renderEntry(); });
   });
   bindText(card.querySelector("[data-text]"), ()=>t.text, v=>t.text=v, e);
   card.querySelector("[data-belief]").appendChild(pctRow("How tempting", t.belief, v=>{t.belief=v; touch(e);}));
@@ -857,7 +890,7 @@ function toggleEntryMenu(){
     if(a==="claude"){ (await copyText(claudePrompt(e))) ? toast("Copied — paste into a Claude chat") : toast("Copy failed"); }
     if(a==="json"){ (await copyText(JSON.stringify(e,null,2))) ? toast("JSON copied") : toast("Copy failed"); }
     if(a==="dl"){ download(`moodlog-${e.type}-${e.createdAt.slice(0,10)}.json`, JSON.stringify(e,null,2)); }
-    if(a==="del"){ if(confirm("Delete this entry permanently?")){ entries=entries.filter(x=>x.id!==e.id); persist(); show("home"); toast("Deleted"); } }
+    if(a==="del"){ uiConfirm("Delete this entry permanently?", ()=>{ entries=entries.filter(x=>x.id!==e.id); persist(); show("home"); toast("Deleted"); }); }
   });
   document.body.appendChild(menuEl);
   setTimeout(()=>document.addEventListener("click", function h(ev){ if(menuEl&&!menuEl.contains(ev.target)&&ev.target.id!=="menuBtn"){ closeMenu(); document.removeEventListener("click",h);} }),0);
@@ -1117,15 +1150,17 @@ function renderData(){
     b.addEventListener("click", ()=>{ setSetting("theme", b.dataset.th); applyTheme(); renderData(); });
   });
   $("#wipe").addEventListener("click", ()=>{
-    if(confirm("Delete ALL entries permanently? Consider exporting first.")){
-      if(confirm("Really sure? This cannot be undone.")){ entries=[]; persist(); toast("All entries deleted"); }
-    }
+    uiConfirm("Delete ALL entries permanently? Consider exporting first.", ()=>{
+      uiConfirm("Really sure? This cannot be undone.", ()=>{ entries=[]; persist(); toast("All entries deleted"); }, {confirmLabel:"Delete everything"});
+    });
   });
 }
 
+const hostTheme = document.documentElement.dataset.theme || null; // e.g. stamped by an embedding host
 function applyTheme(){
   const t=settings().theme;
   if(t==="light"||t==="dark") document.documentElement.dataset.theme=t;
+  else if(hostTheme) document.documentElement.dataset.theme=hostTheme;
   else delete document.documentElement.dataset.theme;
 }
 
